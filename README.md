@@ -149,5 +149,5 @@ function(T&& arg) // arg - lvalue всегда, т.к. T&& arg - xvalue, поэ�
 std::move - приводит lvalue к rvalue, std::forward - lvalue просто возвращает lvalue, а rvalue – возвращает std::move(rvalue).
 
 # Сайты: 
-[https://habr.com/ru/articles/322132/](https://habr.com/ru/articles/322132/) <br/>
-[https://habr.com/ru/articles/568306/](https://habr.com/ru/articles/568306/)
+[Подробное введение в rvalue-ссылки для тех, кому не хватило краткого](https://habr.com/ru/articles/322132/) <br/>
+[std::move vs. std::forward](https://habr.com/ru/articles/568306/)
