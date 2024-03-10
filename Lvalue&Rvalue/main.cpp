@@ -118,7 +118,7 @@ int main()
         std::cout << "--------------------" << std::endl;
     }
     /*
-     std::move преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
+     std::move - НИЧЕГО НЕ ПЕРЕМЕЩАЕТ, преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
      template <class _Ty>
      [[nodiscard]] constexpr remove_reference_t<_Ty>&& move(_Ty&& _Arg) noexcept
      {
