@@ -11,7 +11,7 @@
  */
 
 
-int main(int argc, const char * argv[])
+int main()
 {
     /*
      lvalue_rvalue
@@ -29,7 +29,7 @@ int main(int argc, const char * argv[])
      xvalue - объект, связывающий rvalue с lvalue, но имеет ИМЯ и тип A&&.
      Пример:
      int&& result = function(); // xvalue(A&&) связывает lvalue с rvalue -> lvalue
-     template<typename T> function(T&& arg) // xvalue(A&&) связывает lvalue с rvalue -> lvalue
+     template<typename T> void function(T&& arg) // xvalue(A&&) связывает lvalue с rvalue -> lvalue
 
      Приоритет перегрузки:
      1. T&& (rvalue)
@@ -86,7 +86,7 @@ int main(int argc, const char * argv[])
         Derived derived1 = getDerived1();
         Derived derived2 = getDerived2();
 
-        /// Вызывается конструктор перемещения, нет смысла вызывать std::move для rvalue
+        /// Вызовется конструктор копирования вместо operator= перемещения, потому что создается новый объект и он стоит слева(lvalue), нет смысла вызывать std::move для rvalue
         Derived derived3 = getDerived3();
 
         /// Вызывается конструктор перемещения,  есть смысл вызывать std::move для lvalue
@@ -95,12 +95,12 @@ int main(int argc, const char * argv[])
         /// Вызывается  автоматически  конструктор перемещения, нет смысла вызывать std::move для rvalue
         derived1 = Derived();
         
-        /// Вызывается  конструктор перемещения, есть смысл вызывать std::move для lvalue
+        /// Вызывается operator= перемещения, есть смысл вызывать std::move для lvalue
         derived1 = std::move(derived2);
 
         Derived* derived5 = new Derived();
         /// Нет конструктора перемещения у «сырых» указателей, нет смысла вызывать std::move
-        Derived* derived6 = derived5;
+        [[maybe_unused]] Derived* derived6 = derived5;
 
         std::shared_ptr<Derived> derived7 = std::make_shared<Derived>();
         /// Есть конструктор перемещения у умных указателей, есть смысл вызвать std::move для lvalue
@@ -118,7 +118,7 @@ int main(int argc, const char * argv[])
         std::cout << "--------------------" << std::endl;
     }
     /*
-     std::move преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку c помощью конструктора премещения без конструктора копирования. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
+     std::move преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
      template <class _Ty>
      [[nodiscard]] constexpr remove_reference_t<_Ty>&& move(_Ty&& _Arg) noexcept
      {
@@ -130,8 +130,9 @@ int main(int argc, const char * argv[])
         using namespace MOVE;
         lvalue_rvalue::Derived derived = lvalue_rvalue::getDerived1();
         
-        auto newDerived = std::move(derived); // Вызовется конструктор копирования, потому что создается новый объект
-        derived = std::move(derived); // Вызывается конструктор перемещения, есть смысл вызывать std::move для lvalue
+        lvalue_rvalue::Derived newDeried1(std::move(derived)); // Вызывается конструктор перемещения,  есть смысл вызывать std::move для lvalue
+        auto newDerive2 = std::move(derived); // Вызовется конструктор копирования вместо operator= перемещения, потому что создается новый объект и он стоит слева(lvalue), нет смысла вызывать std::move для rvalue
+        derived = std::move(derived); // Вызывается operator= перемещения, есть смысл вызывать std::move для lvalue
     }
     /*
      std::swap - меняет местами два параметра одинаковых типа, используя до C++11 оператор копирования копирования, после C++11 оператор перемещения (std::move).
@@ -201,7 +202,7 @@ int main(int argc, const char * argv[])
      T&&(A&&) = A&& // && отбрасывается, но тип xvalue->lvalue
      Универсальной ссылка - аргумент типа T&&, где T — шаблонный тип, может принимать оба типа ссылок (A& и A&&).
      Пример:
-     template<typename T> function(T&& arg) // arg - lvalue всегда, т.к. T&& arg - xvalue, поэтому будет вызываться конструктор копирования
+     template<typename T> void function(T&& arg) // arg - lvalue всегда, т.к. T&& arg - xvalue, поэтому будет вызываться конструктор копирования.
      Отличие std::forward от std::move: std::move - приводит lvalue к rvalue, std::forward - lvalue просто возвращает lvalue, а rvalue – возвращает std::move(rvalue).
      */
     {

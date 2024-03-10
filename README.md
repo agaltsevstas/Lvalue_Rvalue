@@ -23,7 +23,7 @@ xvalue - объект, связывающий rvalue с lvalue, но имеет 
 ```
 int&& result = function(); // xvalue(A&&) связывает lvalue с rvalue -> lvalue
 template<typename T>
-function(T&& arg) // xvalue(A&&) связывает lvalue с rvalue -> lvalue
+void function(T&& arg) // xvalue(A&&) связывает lvalue с rvalue -> lvalue
 ```
 ## Приоритет перегрузки:
 1. T&& (rvalue)
@@ -54,12 +54,12 @@ class vector
 ```
 
 # move
-std::move преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку c помощью конструктора премещения без конструктора копирования. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
+std::move преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
 ```
-template <class _Ty>
-constexpr remove_reference_t<_Ty>&& move(_Ty&& _Arg) noexcept
+template <class T>
+[[nodiscard]] constexpr remove_reference_t<T>&& move(T&& arg) noexcept
 {
-    return static_cast<remove_reference_t<_Ty>&&>(_Arg);
+    return static_cast<remove_reference_t<T>&&>(arg);
 }
 ```
 ## Отличие std::move от std::forward 

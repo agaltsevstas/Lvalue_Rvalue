@@ -103,7 +103,7 @@ namespace lvalue_rvalue
             
         }
         
-        Base& operator=(const Base& other)
+        Base& operator=(const Base& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
             return *this;
         }
@@ -113,7 +113,7 @@ namespace lvalue_rvalue
             
         }
          
-        Base& operator=(Base&& other)
+        Base& operator=(Base&& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
             return *this;
         }
@@ -147,7 +147,7 @@ namespace lvalue_rvalue
             *this = other;
         }
         
-        Derived& operator=(const Derived& other)
+        Derived& operator=(const Derived& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
             log(this, "copy operator=");
             Base::operator=(other);
@@ -166,7 +166,7 @@ namespace lvalue_rvalue
             *this = std::move(other);
         }
          
-        Derived& operator=(Derived&& other)
+        Derived& operator=(Derived&& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
             log(this, "move operator=");
             Base::operator=(std::move(other));
@@ -194,9 +194,9 @@ namespace lvalue_rvalue
         return Derived();
     }
 
-    /// Вызывается конструктор перемещения, есть смысл вызывать std::move для lvalue
+    /// Вызовется конструктор копирования вместо operator= перемещения, потому что создается новый объект и он стоит слева(lvalue), нет смысла вызывать std::move для rvalue
     Derived getDerived;
-    Derived getDerived3()
+    Derived&& getDerived3()
     {
         return std::move(getDerived);
     }
