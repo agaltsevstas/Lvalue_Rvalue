@@ -3,6 +3,7 @@
 
 /*
  std::move - НИЧЕГО НЕ ПЕРЕМЕЩАЕТ, преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
+ C помощью move можно попасть в конструктор перемещения или оператор присваивания, если он реализован в классе.
  template <class _Ty>
  [[nodiscard]] constexpr remove_reference_t<_Ty>&& move(_Ty&& _Arg) noexcept
  {
@@ -13,7 +14,7 @@
 namespace MOVE
 {
     template <class T>
-    constexpr std::remove_reference_t<T>&& move(T&& value) noexcept
+    [[nodiscard]] constexpr std::remove_reference_t<T>&& move(T&& value) noexcept
     {
         return static_cast<std::remove_reference_t<T>&&>(value);
     }
