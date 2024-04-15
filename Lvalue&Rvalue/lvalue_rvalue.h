@@ -88,10 +88,7 @@ namespace lvalue_rvalue
     class Base
     {
     public:
-        explicit Base()
-        {
-            
-        }
+        Base() = default;
 
         ~Base()
         {
@@ -105,16 +102,22 @@ namespace lvalue_rvalue
         
         Base& operator=(const Base& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
+            if (this == &other)
+                return *this;
+            
             return *this;
         }
         
-        explicit Base(Base&& other) noexcept
+        Base(Base&& other) noexcept
         {
             
         }
          
         Base& operator=(Base&& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
+            if (this == &other)
+                return *this;
+            
             return *this;
         }
     };
@@ -122,12 +125,7 @@ namespace lvalue_rvalue
     class Derived : public Base
     {
     public:
-        explicit Derived() : Base()
-        {
-            log(this, "constructor");
-        }
-        
-        explicit Derived(int) : Base()
+        Derived() : Base()
         {
             log(this, "constructor");
         }
@@ -138,10 +136,12 @@ namespace lvalue_rvalue
         }
 
         Derived(const Derived& other)
-    //        Можно вызвать оператор присваивания, чтобы не писать лишний код
-    //        Base(other)
-    //        _number(other._number),
-    //        _text(other._text)
+        /*
+         Можно вызвать оператор присваивания, чтобы не писать лишний код
+         Base(other)
+         _number(other._number),
+         _text(other._text)
+         */
         {
             log(this, "copy constructor");
             *this = other;
@@ -150,17 +150,22 @@ namespace lvalue_rvalue
         Derived& operator=(const Derived& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
             log(this, "copy operator=");
+            if (this == &other)
+                return *this;
+            
             Base::operator=(other);
             _number = other._number;
             _text = other._text;
             return *this;
         }
         
-        explicit Derived(Derived&& other) noexcept
-    //    Можно вызвать оператор присваивания, чтобы не писать лишний код
-    //    Base(std::move(other))
-    //    _number(std::move(other._number)),
-    //    _text(std::move(other._text))
+        Derived(Derived&& other) noexcept
+        /*
+         Можно вызвать оператор присваивания, чтобы не писать лишний код
+         Base(std::move(other))
+         _number(std::move(other._number)),
+         _text(std::move(other._text))
+         */
         {
             log(this, "move constructor");
             *this = std::move(other);
@@ -169,26 +174,52 @@ namespace lvalue_rvalue
         Derived& operator=(Derived&& other) // Возвращаем ссылку, чтобы потом можно было присвоить
         {
             log(this, "move operator=");
+            if (this == &other)
+                return *this;
+            
             Base::operator=(std::move(other));
             _number = std::exchange(other._number, 0);
             _text = std::move(other._text);
             return *this;
         }
         
-        std::string GetText() const noexcept { return _text; }
+        /// Вызывается для lvalue объекта, тоже самое const int& GetNumber() const
+        const int& GetNumber() const & noexcept
+        {
+            std::cout << "lvalue GetNumber" << std::endl;
+            return _number;
+        }
+        /// Вызывается для rvalue объекта, тоже самое int GetNumber() const
+        int GetNumber() const && noexcept
+        {
+            std::cout << "rvalue GetNumber" << std::endl;
+            return _number;
+        }
+        /// Вызывается для lvalue объекта, тоже самое const std::string& GetText() const noexcept
+        const std::string& GetText() const & noexcept
+        {
+            std::cout << "lvalue GetText" << std::endl;
+            return _text;
+        }
+        /// Вызывается для rvalue объекта, тоже самое std::string GetText() const
+        std::string GetText() const && noexcept
+        {
+            std::cout << "rvalue GetText" << std::endl;
+            return _text;
+        }
         
         int _number = 5;
         std::string _text = "text";
     };
 
-    /// Вызывается обычный конструктор без копировнаи и без перемещения, нет смысла вызывать std::move для rvalue, т.к объект из стека удаляется
+    /// Вызывается обычный конструктор без копирования и без перемещения, нет смысла вызывать std::move для rvalue, т.к объект из стека удаляется
     Derived getDerived1()
     {
         Derived derived = Derived();
         return derived;
     }
 
-    /// Вызывается обычный конструктор без копировнаи и без перемещения, нет смысла вызывать std::move для rvalue
+    /// Вызывается обычный конструктор без копирования и без перемещения, нет смысла вызывать std::move для rvalue
     Derived getDerived2()
     {
         return Derived();

@@ -77,16 +77,18 @@ int main()
             function(number2); // 3. T& (lvalue)
             function(number3); // 4. const T& (lvalue)
         }
-//        Derived& derivedRef1 = getDerived1(); // Не скомпилируется - нельзя привязать rvalue к ссылке на lvalue
+        // Derived& derivedRef1 = getDerived1(); // Не скомпилируется - нельзя привязать rvalue к ссылке на lvalue
         const Derived& derivedRef2 = getDerived1();
         Derived&& derivedRef3 = getDerived1(); // rvalue == lvalue, потому что xvalue является rvalue, но имеет свойства lvalue
-//        Derived&& derivedRef4 = derivedRef3; // Не скомпилируется - нельзя привязать rvalue к ссылке на lvalue
+        // Derived&& derivedRef4 = derivedRef3; // Не скомпилируется - нельзя привязать rvalue к ссылке на lvalue
+        [[maybe_unused]] Derived&& derivedRef5 = std::move(derivedRef3); // Требуется вызвать std::move для xvalue, которое имеет свойства rvalue и lvalue (в приоритете)
+        Derived derivedRef6 = std::move(derivedRef2); // Вызывается конструктор копирования для const обекта, нет смысла вызывать std::move
         
-        /// Вызывается обычный конструктор без копировнаи и без перемещения, нет смысла вызывать std::move
+        /// Вызывается обычный конструктор без копирования и без перемещения, нет смысла вызывать std::move
         Derived derived1 = getDerived1();
         Derived derived2 = getDerived2();
 
-        /// Вызовется конструктор копирования вместо operator= перемещения, потому что создается новый объект и он стоит слева(lvalue), нет смысла вызывать std::move для rvalue
+        /// Вызывается конструктор перемещения,  есть смысл вызывать std::move для lvalue
         Derived derived3 = getDerived3();
 
         /// Вызывается конструктор перемещения,  есть смысл вызывать std::move для lvalue
@@ -95,27 +97,38 @@ int main()
         /// Вызывается  автоматически  конструктор перемещения, нет смысла вызывать std::move для rvalue
         derived1 = Derived();
         
+        /// Вызывается operator= перемещения, но нет смысла вызывать std::move для перемещения объекта в самого себя
+        derived1 = std::move(derived1);
+        
         /// Вызывается operator= перемещения, есть смысл вызывать std::move для lvalue
         derived1 = std::move(derived2);
 
         Derived* derived5 = new Derived();
         /// Нет конструктора перемещения у «сырых» указателей, нет смысла вызывать std::move
         [[maybe_unused]] Derived* derived6 = derived5;
+        delete derived5;
 
-        std::shared_ptr<Derived> derived7 = std::make_shared<Derived>();
+        std::unique_ptr<Derived> derived7 = std::make_unique<Derived>();
         /// Есть конструктор перемещения у умных указателей, есть смысл вызвать std::move для lvalue
-        std::shared_ptr<Derived> derived8 = std::move(derived7);
+        std::unique_ptr<Derived> derived8 = std::move(derived7);
         
         std::vector<Derived> deriveds;
         /// Вызывается  конструктор перемещения, есть смысл вызывать std::move для lvalue (reserve(1))
         deriveds.emplace_back(std::move(derived1));
         /// 2 Вызова конструктора перемещения, т.к. идет заново выделение памяти (reserve(4))
         deriveds.emplace_back(std::move(derived4));
-        /// Вызов обычного конструктора (reserve(4))
-        deriveds.emplace_back(derived1);
-        /// Вызов обычного конструктора (reserve(4))
-        deriveds.emplace_back(2);
+        /// Вызов конструктора копирования для const объекта (reserve(4))
+        deriveds.emplace_back(std::move(derivedRef2));
+        
+        Derived derived;
+        [[maybe_unused]] const int& numberLvalue = derived.GetNumber();
+        [[maybe_unused]] const std::string& textLvalue = derived.GetText();
+        
+        [[maybe_unused]] const int& numberRvalue = Derived().GetNumber();
+        [[maybe_unused]] const std::string& textRvalue = Derived().GetText();
+        
         std::cout << "--------------------" << std::endl;
+        
     }
     /*
      std::move - НИЧЕГО НЕ ПЕРЕМЕЩАЕТ, преобразует неконстантную lvalue-ссылку или rvalue-ссылку в rvalue-ссылку. Это просто обертка для static_cast, которая убирает ссылку (& или &&) у переданного аргумента с помощью remove_reference_t и добавляет &&, чтобы преобразовать в тип rvalue.
@@ -130,10 +143,10 @@ int main()
     {
         using namespace MOVE;
         lvalue_rvalue::Derived derived = lvalue_rvalue::getDerived1();
-        
-        lvalue_rvalue::Derived newDeried1(std::move(derived)); // Вызывается конструктор перемещения,  есть смысл вызывать std::move для lvalue
-        auto newDerive2 = std::move(derived); // Вызовется конструктор копирования вместо operator= перемещения, потому что создается новый объект и он стоит слева(lvalue), нет смысла вызывать std::move для rvalue
-        derived = std::move(derived); // Вызывается operator= перемещения, есть смысл вызывать std::move для lvalue
+        derived = move(derived); // Вызывается operator= перемещения, но нет смысла вызывать std::move для перемещения объекта в самого себя
+        lvalue_rvalue::Derived derived2(move(derived)); // Вызывается конструктор перемещения, есть смысл вызывать std::move для lvalue
+        const lvalue_rvalue::Derived derived3 = move(derived2); // Вызывается конструктор перемещения, есть смысл вызывать std::move для lvalue
+        lvalue_rvalue::Derived derived4 = move(derived3); // Вызывается конструктор копирования для const обекта, нет смысла вызывать std::move
     }
     /*
      std::swap - меняет местами два параметра одинаковых типа, используя до C++11 оператор копирования копирования, после C++11 оператор перемещения (std::move).
